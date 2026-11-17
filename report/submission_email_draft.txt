@@ -1,0 +1,10 @@
+To: b.azimkhanov@kbtu.kz
+Subject: AI-Driven Software Engineering Practice #12, Talgat Kozhakhmetov, 24B031852
+
+Class time and day: Tuesday 13:00 - 16:00  (please confirm - copied from my Assignment #03 report)
+AI tool: Claude Code (CLI agent), model Claude Sonnet 5.5 (claude-sonnet-5-5)
+Project link (live demo): not published - runs locally (python3 app/server.py), see README.md
+Attached: report/Practice11_Report.pdf and the screenshots from shots/ (no ZIP / OneDrive / WinRAR, as required)
+
+Practice #11: "Explain availability" feature for the Smart Campus checker - mock LLM adapter, 14 expected-vs-observed cases,
+agentic review with 8 evaluated findings (3 unsupported), 2 confirmed findings fixed.

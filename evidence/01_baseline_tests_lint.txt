@@ -1,0 +1,9 @@
+== baseline unit tests (cmd: cd baseline && python3 -m unittest -v test_booking)
+----------------------------------------------------------------------
+Ran 33 tests in 0.000s
+
+OK
+== lint: py_compile
+py_compile OK
+== lint: no flake8/pylint/eslint installed; node --check on extracted <script>
+node --check: OK

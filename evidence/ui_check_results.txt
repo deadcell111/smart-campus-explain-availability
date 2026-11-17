@@ -1,0 +1,29 @@
+PASS REG base free -> Available
+PASS REG touching 11:00-12:00 -> Available
+PASS REG overlap 10:30-11:30 -> Unavailable
+PASS REG blocked 11:00-12:00 -> Unavailable
+PASS REG exactly 120 (11:00-13:00) -> Available
+PASS REG 121 min (14:30-16:31) -> Unavailable
+PASS REG starts now 09:00-09:30 -> Unavailable
+PASS REG reversed 12:00-11:00 -> Unavailable
+PASS REG empty inputs -> Enter both times
+PASS U01 explain button visible after a check 
+PASS U02 available: explanation shown, mock source labelled -> Mock demo adapter | Good news: Room B-204 is free from 12:00 to 13:00.
+PASS U03 result card unchanged by explanation (AC1/AC2) 
+PASS U04 explanation visually/verbally distinct from status (AC5) 
+PASS U05 overlap: agrees with Unavailable, no invented times -> Room B-204 already has an existing booking that overlaps 10:30-11:30. Please try another time.
+PASS U06 blocked room: explanation says blocked -> Room B-204 is currently blocked, so it cannot be requested at any time.
+PASS U07 invalid time (end before start) -> The end time must come after the start time on the same day. Please adjust the times.
+PASS U08 past/now start -> The start time must be later than the current time. Please pick a later start.
+PASS U09 over 120 minutes -> This request is longer than the 120-minute maximum. Please choose a shorter time.
+PASS U10 empty input: no explain button offered 
+PASS U11 editing an input hides the now-stale explanation 
+PASS U12 simulated API error: fallback shown, decision unchanged -> Standard message (assistant unavailable) | Available: the room is free for the requested time.
+PASS U13 timeout: fallback shown, decision unchanged -> Standard message (assistant unavailable) | Available: the room is free for the requested time.
+PASS U14 contradicting model output: fallback shown, decision unchanged -> Standard message (assistant unavailable) | Available: the room is free for the requested time.
+PASS U15 markup/instruction in model output: fallback shown, decision unchanged -> Standard message (assistant unavailable) | Available: the room is free for the requested time.
+PASS U16 no server (file://): safe message, decision unchanged -> An explanation is not available right now.
+PASS U17 original rules still work without the server 
+PASS U18 no horizontal scroll at 375px 
+PASS U19 no JS page errors 
+total 28 passed 28 failed 0

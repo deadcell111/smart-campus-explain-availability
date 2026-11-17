@@ -1,0 +1,16 @@
+H1 | CONFIRMED | Output validator accepts explanations that contradict an UNAVAILABLE status
+     evidence: 2/2 contradictory explanations of UNAVAILABLE results were accepted
+H2 | CONFIRMED | Shared 4-thread pool: slow/timed-out calls starve healthy requests
+     evidence: healthy request while 6 slow calls were pending -> source=fallback, note=timeout
+H3 | CONFIRMED | No socket timeout: a client that sends a short body pins a server thread
+     evidence: after 2.5 s the server is still waiting for the missing body bytes (no socket timeout on the handler thread)
+H4 | CONFIRMED | Validator rejects correct 'no overlap / not blocked' wording
+     evidence: 2/2 correct explanations of an AVAILABLE slot were rejected (safe fallback shown instead)
+H5 | UNSUPPORTED | Model output can inject HTML/script in the UI
+     evidence: img element injected: False, script flag set: False; text shown literally: '<img src=x onerror="window.__x'
+H6 | UNSUPPORTED | API key or provider error text can leak to the client/logs
+     evidence: secret in response/log: False; note='adapter_error: RuntimeError'; source=fallback
+H7 | UNSUPPORTED | Static file server allows path traversal to source files
+     evidence: statuses {"/%2e%2e/booking.py": 404, "/../booking.py": 404, "/explain.py": 404, "/index.html/../server.py": 404, "/app/server.py": 404}
+H8 | CONFIRMED (design risk, no defect today) | Rules and data are duplicated across files (drift risk)
+     evidence: overlap predicate written in 3 files {'booking.py': 1, 'reasons.py': 1, 'index.html': 1}; booking data duplicated in index.html and reasons.py (currently equal: True)

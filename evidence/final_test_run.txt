@@ -1,0 +1,72 @@
+
+$ bash -c cd baseline && python3 -m unittest -v test_booking 2>&1 | tail -4
+----------------------------------------------------------------------
+Ran 33 tests in 0.000s
+
+OK
+[exit code 0]
+
+$ python3 -m unittest discover -s tests -p test_*.py
+......
+----------------------------------------------------------------------
+Ran 37 tests in 6.535s
+
+OK
+[exit code 0]
+
+$ python3 -I tests/ui_check.py
+PASS REG base free -> Available
+PASS REG touching 11:00-12:00 -> Available
+PASS REG overlap 10:30-11:30 -> Unavailable
+PASS REG blocked 11:00-12:00 -> Unavailable
+PASS REG exactly 120 (11:00-13:00) -> Available
+PASS REG 121 min (14:30-16:31) -> Unavailable
+PASS REG starts now 09:00-09:30 -> Unavailable
+PASS REG reversed 12:00-11:00 -> Unavailable
+PASS REG empty inputs -> Enter both times
+PASS U01 explain button visible after a check 
+PASS U02 available: explanation shown, mock source labelled -> Mock demo adapter | Good news: Room B-204 is free from 12:00 to 13:00.
+PASS U03 result card unchanged by explanation (AC1/AC2) 
+PASS U04 explanation visually/verbally distinct from status (AC5) 
+PASS U05 overlap: agrees with Unavailable, no invented times -> Room B-204 already has an existing booking that overlaps 10:30-11:30. Please try another time.
+PASS U06 blocked room: explanation says blocked -> Room B-204 is currently blocked, so it cannot be requested at any time.
+PASS U07 invalid time (end before start) -> The end time must come after the start time on the same day. Please adjust the times.
+PASS U08 past/now start -> The start time must be later than the current time. Please pick a later start.
+PASS U09 over 120 minutes -> This request is longer than the 120-minute maximum. Please choose a shorter time.
+PASS U10 empty input: no explain button offered 
+PASS U11 editing an input hides the now-stale explanation 
+PASS U12 simulated API error: fallback shown, decision unchanged -> Standard message (assistant unavailable) | Available: the room is free for the requested time.
+PASS U13 timeout: fallback shown, decision unchanged -> Standard message (assistant unavailable) | Available: the room is free for the requested time.
+PASS U14 contradicting model output: fallback shown, decision unchanged -> Standard message (assistant unavailable) | Available: the room is free for the requested time.
+PASS U15 markup/instruction in model output: fallback shown, decision unchanged -> Standard message (assistant unavailable) | Available: the room is free for the requested time.
+PASS U16 no server (file://): safe message, decision unchanged -> An explanation is not available right now.
+PASS U17 original rules still work without the server 
+PASS U18 no horizontal scroll at 375px 
+PASS U19 no JS page errors 
+total 28 passed 28 failed 0
+[exit code 0]
+
+$ python3 -I tools/run_cases.py
+PASS C01 Available slot 12:00-13:00 expected (200, 'Available', 'mock') observed (200, 'Available', 'mock')
+PASS C02 Overlap 10:30-11:30 (Algorithms seminar) expected (200, 'Unavailable', 'mock') observed (200, 'Unavailable', 'mock')
+PASS C03 Blocked room, otherwise valid slot expected (200, 'Unavailable', 'mock') observed (200, 'Unavailable', 'mock')
+PASS C04 Invalid time: end before start expected (200, 'Unavailable', 'mock') observed (200, 'Unavailable', 'mock')
+PASS C05 Past time: start 08:00 (now 09:00) expected (200, 'Unavailable', 'mock') observed (200, 'Unavailable', 'mock')
+PASS C06 Empty input (empty body) expected (400, '-', 'empty') observed (400, '-', 'empty')
+PASS C07 Overly long input (5000 bytes) expected (413, '-', 'too_long') observed (413, '-', 'too_long')
+PASS C08 Malformed input (time with injected instruction) expected (400, '-', 'bad_start') observed (400, '-', 'bad_start')
+PASS C09 Model timeout (server limit 0.3 s) expected (200, 'Available', 'fallback') observed (200, 'Available', 'fallback')
+PASS C10 Simulated API failure expected (200, 'Available', 'fallback') observed (200, 'Available', 'fallback')
+PASS C11 Unavailable API key (real adapter, no key) expected (200, 'Available', 'fallback') observed (200, 'Available', 'fallback')
+PASS C12 Model contradicts status ('unavailable' for a free slot) expected (200, 'Available', 'fallback') observed (200, 'Available', 'fallback')
+PASS C13 Model invents a booking detail (17:30 chess club) expected (200, 'Available', 'fallback') observed (200, 'Available', 'fallback')
+PASS C14 Model returns HTML / instruction text expected (200, 'Unavailable', 'fallback') observed (200, 'Unavailable', 'fallback')
+[exit code 0]
+
+$ bash tools/lint.sh
+py_compile: OK
+node --check explain-client.js: OK
+node --check index.html inline script: OK
+[exit code 0]
+
+ALL CHECKS PASSED

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Room Availability Checker</title>
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--ink:#1c2430;--mute:#5a6678;--line:#d5dbe5;--ok:#116b3a;--okbg:#e3f5ea;--no:#a3171d;--nobg:#fdeaea;--warn:#8a5a00;--warnbg:#fff4d6;--acc:#1f4fd8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:1.4rem;margin:8px 0 4px}
+h2{font-size:1.05rem;margin:0 0 8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin:12px 0}
+.meta{color:var(--mute);margin:0}
+.badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.85rem;font-weight:600}
+.badge.open{background:var(--okbg);color:var(--ok)}.badge.blocked{background:var(--nobg);color:var(--no)}
+ul.bookings{list-style:none;margin:0;padding:0}
+ul.bookings li{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid var(--line)}
+ul.bookings li:first-child{border-top:0}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{display:block;font-weight:600;font-size:.9rem;margin-bottom:4px}
+input[type=time]{width:100%;font:inherit;padding:10px;border:1px solid var(--line);border-radius:8px;min-height:44px}
+input[aria-invalid=true]{border-color:var(--no)}
+button{width:100%;margin-top:14px;min-height:44px;font:inherit;font-weight:600;color:#fff;background:var(--acc);border:0;border-radius:8px;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid #8fb0ff;outline-offset:2px}
+.demo{margin-top:12px;font-weight:400}
+.demo input{margin-right:6px}
+#result{margin-top:14px;padding:14px;border-radius:8px;font-weight:600;display:none}
+#result.available{display:block;background:var(--okbg);color:var(--ok);border:2px solid var(--ok)}
+#result.unavailable{display:block;background:var(--nobg);color:var(--no);border:2px solid var(--no)}
+#result.invalid{display:block;background:var(--warnbg);color:var(--warn);border:2px solid var(--warn)}
+#result .big{font-size:1.25rem;display:block}
+#result .why{font-weight:400;display:block;margin-top:2px}
+@media (max-width:420px){.fields{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Smart Campus Room Availability Checker</h1>
+  <p class="meta">Check only - this page never creates or changes a booking. All data is fictional.</p>
+
+  <section class="card" aria-labelledby="room">
+    <h2 id="room">Room B-204 <span id="status" class="badge open">Open</span></h2>
+    <p class="meta">Current time: <strong id="nowText"></strong></p>
+    <h3 style="font-size:.95rem;margin:12px 0 4px">Existing bookings</h3>
+    <ul class="bookings" id="bookings"></ul>
+    <label class="demo"><input type="checkbox" id="blockedToggle">Demo: treat room as blocked</label>
+  </section>
+
+  <form class="card" id="form" novalidate aria-labelledby="chk">
+    <h2 id="chk">Candidate time (today)</h2>
+    <div class="fields">
+      <div><label for="start">Start</label><input id="start" type="time" required></div>
+      <div><label for="end">End</label><input id="end" type="time" required></div>
+    </div>
+    <button type="submit">Check availability</button>
+    <div id="result" role="status" aria-live="polite"></div>
+  </form>
+</main>
+<script>
+"use strict";
+// Fictional data. Times are integer minutes after midnight.
+const NOW = 540;                       // 09:00
+const MAX_DURATION = 120;
+const EXISTING = Object.freeze([
+  Object.freeze({title: "Algorithms seminar", start: 600, end: 660}),
+  Object.freeze({title: "Club meeting", start: 780, end: 870}),
+]);
+
+function fmt(min) {
+  const h = String(Math.floor(min / 60)).padStart(2, "0");
+  return h + ":" + String(min % 60).padStart(2, "0");
+}
+function parse(value) {                // "HH:MM" -> minutes, or null if empty/bad
+  const m = /^(\d{2}):(\d{2})$/.exec(value || "");
+  return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+}
+
+// Same rules as booking.can_book; returns a reason code instead of a bare boolean.
+function evaluate(start, end, now, blocked, existing) {
+  if (blocked) return {ok: false, code: "blocked", msg: "The room is blocked, so no time can be requested."};
+  if (!(0 <= start && start < end && end <= 1440))
+    return {ok: false, code: "range", msg: "End must be after start, within the same day (00:00-24:00)."};
+  if (start <= now)
+    return {ok: false, code: "past", msg: "Start must be later than the current time (" + fmt(now) + ")."};
+  if (end - start > MAX_DURATION)
+    return {ok: false, code: "long", msg: "Duration is " + (end - start) + " min; the maximum is " + MAX_DURATION + " min."};
+  for (const b of existing)
+    if (start < b.end && b.start < end)
+      return {ok: false, code: "overlap", msg: "Overlaps \"" + b.title + "\" (" + fmt(b.start) + "-" + fmt(b.end) + ")."};
+  return {ok: true, code: "ok", msg: "The room is free for " + fmt(start) + "-" + fmt(end) + "."};
+}
+
+if (typeof document === "undefined") { module.exports = {evaluate, parse, fmt}; }
+else {
+  const $ = (id) => document.getElementById(id);
+  $("nowText").textContent = fmt(NOW);
+  $("bookings").innerHTML = EXISTING.map((b) =>
+    "<li><span>" + b.title + "</span><span>" + fmt(b.start) + "-" + fmt(b.end) + "</span></li>").join("");
+
+  function show(kind, big, why) {
+    const r = $("result");
+    r.className = kind;
+    r.innerHTML = '<span class="big"></span><span class="why"></span>';
+    r.firstChild.textContent = big;
+    r.lastChild.textContent = why;
+  }
+  function setBlockedBadge(b) {
+    $("status").textContent = b ? "Blocked" : "Open";
+    $("status").className = "badge " + (b ? "blocked" : "open");
+  }
+  $("blockedToggle").addEventListener("change", (e) => { setBlockedBadge(e.target.checked); $("result").className = ""; });
+
+  $("form").addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    const s = parse($("start").value), e = parse($("end").value);
+    $("start").setAttribute("aria-invalid", s === null);
+    $("end").setAttribute("aria-invalid", e === null);
+    if (s === null || e === null) {
+      show("invalid", "Enter both times", "Please fill in a start time and an end time before checking.");
+      return;
+    }
+    const res = evaluate(s, e, NOW, $("blockedToggle").checked, EXISTING);
+    show(res.ok ? "available" : "unavailable", res.ok ? "Available" : "Unavailable", res.msg);
+  });
+}
+</script>
+</body>
+</html>
